@@ -58,7 +58,7 @@ const Login = () => {
 
   return (
     <div style={{ 
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+      background: 'linear-gradient(135deg, #000000ff 0%, #000000ff 100%)', 
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
@@ -73,7 +73,7 @@ const Login = () => {
         maxWidth: '400px',
         boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
       }}>
-        {/* RESQ Header */}
+        {/* ALERTIFY Header */}
         <div style={{
           background: 'var(--primary-red)',
           color: 'white',
@@ -83,10 +83,10 @@ const Login = () => {
           textAlign: 'center'
         }}>
           <h1 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '8px' }}>
-            RESQ
+            ALERTIFY
           </h1>
           <p style={{ fontSize: '14px', opacity: '0.9' }}>
-            Welcome to RESQ Disaster Aids mobile application, we're glad you're here. Already have an account? login.
+            Welcome to ALERTIFY Disaster Aids mobile application, we're glad you're here. Already have an account? login.
           </p>
         </div>
 

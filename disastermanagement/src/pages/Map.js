@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+
 
 const Map = () => {
   const { t } = useLanguage();

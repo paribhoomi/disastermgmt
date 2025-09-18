@@ -45,7 +45,7 @@ const Services = () => {
     {
       title: t('safetyTips'),
       icon: '💡',
-      link: '/safety-tips',
+      link: '/safety',
       color: '#20c997'
     },
     {
@@ -72,7 +72,7 @@ const Services = () => {
     {
       title: 'Information',
       items: [
-        { name: 'Safety Tips', icon: '⚠️', link: '/safety-tips' },
+        { name: 'Safety Tips', icon: '⚠️',  link: '/safety', },
         { name: 'Emergency Kit', icon: '🎒', link: '/emergency-kit' },
         { name: 'First Aid', icon: '🩹', link: '/first-aid' },
         { name: 'DMC', icon: '🏢', link: '/dmc' }

@@ -14,7 +14,7 @@ import Menu2 from './pages/Menu2';
 import LatestNews from './pages/LatestNews';
 import LiveMap from './pages/LiveMap';
 import './styles/global.css';
-
+import DisasterSafetyTips  from './pages/DisasterSafetyTips'
 
 function App() {
   return (
@@ -29,9 +29,11 @@ function App() {
             <Route path="/services" element={<Layout><Services /></Layout>} />
             <Route path="/emergency" element={<Layout><Emergency /></Layout>} />
             <Route path="/profile" element={<Layout><Profile /></Layout>} />
-            <Route path="/menu2" element={<Layout><Menu2 /></Layout>} />
+            <Route path="/menu2" element={<Layout><Menu /></Layout>} />
             <Route path="/news" element={<Layout><LatestNews /></Layout>} />
             <Route path="/map" element={<Layout><LiveMap /></Layout>} />
+            <Route path="/safety " element={<Layout><DisasterSafetyTips /></Layout>} />
+
 
           </Routes>
         </div>

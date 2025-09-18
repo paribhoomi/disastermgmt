@@ -337,7 +337,7 @@ const Profile = () => {
             { label: 'Privacy Settings', icon: '🔒', action: () => console.log('Privacy settings') },
             { label: 'Notification Settings', icon: '🔔', action: () => console.log('Notification settings') },
             { label: 'Help & Support', icon: '❓', action: () => console.log('Help & support') },
-            { label: 'About RESQ', icon: 'ℹ️', action: () => console.log('About RESQ') }
+            { label: 'About ALERTIFY', icon: 'ℹ️', action: () => console.log('About RESQ') }
           ].map((setting, index) => (
             <button
               key={index}

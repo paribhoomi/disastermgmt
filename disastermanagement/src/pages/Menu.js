@@ -8,7 +8,7 @@ const Menu = () => {
   const menuItems = [
     {
       title: '2019 Flood Statistics',
-      image: '/api/placeholder/400/200',
+      image: 'disastermanagement\src\img\download (2).jpeg',
       link: '/news',
       type: 'featured'
     }
