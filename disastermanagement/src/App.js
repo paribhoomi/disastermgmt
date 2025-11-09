@@ -12,9 +12,11 @@ import Emergency from './pages/Emergency';
 import Profile from './pages/Profile';
 import Menu2 from './pages/Menu2';
 import LatestNews from './pages/LatestNews';
-import LiveMap from './pages/LiveMap';
+import Map from './pages/Map';
 import './styles/global.css';
-import DisasterSafetyTips  from './pages/DisasterSafetyTips'
+import Safety  from './pages/Safety'
+import "leaflet/dist/leaflet.css";
+
 
 function App() {
   return (
@@ -31,9 +33,9 @@ function App() {
             <Route path="/profile" element={<Layout><Profile /></Layout>} />
             <Route path="/menu2" element={<Layout><Menu /></Layout>} />
             <Route path="/news" element={<Layout><LatestNews /></Layout>} />
-            <Route path="/map" element={<Layout><LiveMap /></Layout>} />
-            <Route path="/safety " element={<Layout><DisasterSafetyTips /></Layout>} />
-
+            <Route path="/map" element={<Layout><Map /></Layout>} />
+            <Route path="/Safety" element={<Layout><Safety /></Layout>} />
+            <Route path="/LatestNews" element={<Layout><LatestNews /></Layout>} />
 
           </Routes>
         </div>

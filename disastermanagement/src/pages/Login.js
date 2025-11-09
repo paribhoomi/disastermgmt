@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import axios from "axios";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -20,40 +21,34 @@ const Login = () => {
     });
   };
 
+  // ✅ Main login handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const userData = {
-        id: 1,
-        email: formData.email,
-        firstName: 'John',
-        lastName: 'Doe',
-        mobileNumber: '+1234567890',
-        bloodGroup: 'O+',
-        location: 'Mumbai, India'
-      };
-      login(userData);
-      navigate('/menu');
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/login", formData);
+      alert(res.data.message || "Login successful!");
+      
+      // ✅ Store only email in AuthContext
+      login(formData.email);
+      navigate("/menu");
+    } catch (err) {
+      alert(err.response?.data || "Login failed");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    // Simulate Google login
-    const userData = {
-      id: 2,
-      email: 'john.doe@gmail.com',
-      firstName: 'John',
-      lastName: 'Doe',
-      mobileNumber: '+1234567890',
-      bloodGroup: 'O+',
-      location: 'Mumbai, India'
-    };
-    login(userData);
-    navigate('/menu');
+  // ✅ Google login handler
+  const handleGoogleLogin = async () => {
+    try {
+      // TODO: Implement actual Google OAuth flow
+      // For now, redirect to backend Google auth endpoint
+      window.location.href = "http://localhost:5000/api/auth/google";
+    } catch (err) {
+      alert("Google login failed");
+    }
   };
 
   return (

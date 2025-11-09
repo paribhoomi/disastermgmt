@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 
-const DisasterSafetyTips = () => {
+const Safety = () => {
   const [activeTab, setActiveTab] = useState("before");
 
   const tips = {
@@ -120,4 +120,4 @@ const styles = {
   }
 };
 
-export default DisasterSafetyTips;
+export default Safety;

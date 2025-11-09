@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import axios from "axios";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -66,31 +67,39 @@ const Register = () => {
     return newErrors;
   };
 
+  // ✅ Main registration handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
-    
+
     setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const userData = {
+
+    try {
+      // ✅ Send registration data to backend
+      const res = await axios.post("http://localhost:5000/api/signup", {
         firstName: formData.firstName,
         lastName: formData.lastName,
-        email: formData.email,
         mobileNumber: formData.mobileNumber,
-        bloodGroup: '',
-        location: ''
-      };
-      register(userData);
+        email: formData.email,
+        password: formData.password
+      });
+
+      alert(res.data.message || "Signup successful!");
+      
+      // ✅ Automatically log in the user after successful registration
+      register(formData.email);
       navigate('/menu');
+    } catch (err) {
+      console.error(err);
+      alert("Signup failed: " + (err.response?.data || "Server error"));
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

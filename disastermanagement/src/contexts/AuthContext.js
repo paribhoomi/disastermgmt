@@ -15,39 +15,29 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored user data
-    const storedUser = localStorage.getItem('resq_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    // Check for stored user email (minimal data)
+    const storedEmail = localStorage.getItem('resq_user_email');
+    if (storedEmail) {
+      setUser({ email: storedEmail });
     }
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('resq_user', JSON.stringify(userData));
+  // ✅ Login - store only email
+  const login = (email) => {
+    setUser({ email });
+    localStorage.setItem('resq_user_email', email);
   };
 
+  // ✅ Logout
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('resq_user');
+    localStorage.removeItem('resq_user_email');
   };
 
-  const register = (userData) => {
-    // In a real app, this would make an API call
-    const newUser = {
-      id: Date.now(),
-      ...userData,
-      createdAt: new Date().toISOString()
-    };
-    login(newUser);
-    return newUser;
-  };
-
-  const updateProfile = (updatedData) => {
-    const updatedUser = { ...user, ...updatedData };
-    setUser(updatedUser);
-    localStorage.setItem('resq_user', JSON.stringify(updatedUser));
+  // ✅ Register - automatically log in after successful registration
+  const register = (email) => {
+    login(email);
   };
 
   const value = {
@@ -56,7 +46,6 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     register,
-    updateProfile,
     isAuthenticated: !!user
   };
 

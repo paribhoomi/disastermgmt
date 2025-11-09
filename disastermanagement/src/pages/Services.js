@@ -13,9 +13,9 @@ const Services = () => {
       color: '#007bff'
     },
     {
-      title: t('safeRoute'),
+      title: t('Safety'),
       icon: '🛣️',
-      link: '/safe-route',
+      link: '/Safety',
       color: '#28a745'
     },
     {
@@ -25,9 +25,9 @@ const Services = () => {
       color: '#dc3545'
     },
     {
-      title: t('news'),
+      title: t('LatestNews'),
       icon: '📰',
-      link: '/news',
+      link: '/LatestNews',
       color: '#ffc107'
     },
     {

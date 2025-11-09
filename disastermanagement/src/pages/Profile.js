@@ -1,25 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const Profile = () => {
-  const { user, updateProfile, logout } = useAuth();
+  const { user, logout } = useAuth();
   const { t } = useLanguage();
+
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    mobileNumber: user?.mobileNumber || '',
-    bloodGroup: user?.bloodGroup || '',
-    location: user?.location || '',
-    email: user?.email || ''
+    firstName: '',
+    lastName: '',
+    mobileNumber: '',
+    bloodGroup: '',
+    location: '',
+    email: ''
   });
 
+  const [loading, setLoading] = useState(true);
   const [emergencyContacts, setEmergencyContacts] = useState([
     { name: 'John Smith', relation: 'Father', phone: '+1234567890' },
     { name: 'Mary Smith', relation: 'Mother', phone: '+1234567891' },
     { name: 'Dr. Johnson', relation: 'Family Doctor', phone: '+1234567892' }
   ]);
+
+  // ✅ Fetch user profile from backend with proper error handling
+  useEffect(() => {
+    const fetchUser = async () => {
+      // ✅ Wait for user.email to be available
+      if (!user?.email) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const res = await axios.get(`http://localhost:5000/api/users/${user.email}`);
+        console.log("User data fetched:", res.data);
+        
+        // ✅ Set fetched data
+        setFormData({
+          firstName: res.data.firstName || '',
+          lastName: res.data.lastName || '',
+          mobileNumber: res.data.mobileNumber || '',
+          bloodGroup: res.data.bloodGroup || '',
+          location: res.data.location || '',
+          email: res.data.email || user.email
+        });
+      } catch (err) {
+        console.error("Error fetching user:", err);
+        
+        // ✅ On error, initialize with empty values and user's email
+        setFormData({
+          firstName: '',
+          lastName: '',
+          mobileNumber: '',
+          bloodGroup: '',
+          location: '',
+          email: user.email
+        });
+        
+        alert('⚠️ Could not load profile data. You can still edit your information.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [user?.email]); // ✅ Only depend on user.email
 
   const handleChange = (e) => {
     setFormData({
@@ -28,9 +76,28 @@ const Profile = () => {
     });
   };
 
-  const handleSave = () => {
-    updateProfile(formData);
-    setIsEditing(false);
+  // ✅ Save updates to backend
+  const handleSave = async () => {
+    if (!formData.email) {
+      alert('❌ Email is required to update profile');
+      return;
+    }
+
+    try {
+      const res = await axios.put(`http://localhost:5000/api/users/${formData.email}`, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        mobileNumber: formData.mobileNumber,
+        bloodGroup: formData.bloodGroup,
+        location: formData.location
+      });
+      
+      alert('✅ Profile updated successfully!');
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      alert('❌ Failed to update profile: ' + (err.response?.data || 'Server error'));
+    }
   };
 
   const handleLogout = () => {
@@ -46,12 +113,8 @@ const Profile = () => {
     const name = prompt('Enter contact name:');
     const relation = prompt('Enter relation:');
     const phone = prompt('Enter phone number:');
-    
     if (name && relation && phone) {
-      setEmergencyContacts([
-        ...emergencyContacts,
-        { name, relation, phone }
-      ]);
+      setEmergencyContacts([...emergencyContacts, { name, relation, phone }]);
     }
   };
 
@@ -61,6 +124,22 @@ const Profile = () => {
       setEmergencyContacts(updatedContacts);
     }
   };
+
+  // ✅ Show loading state
+  if (loading) {
+    return (
+      <div style={{ 
+        padding: '20px', 
+        textAlign: 'center',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>Loading profile...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="profile-container" style={{ padding: '20px', paddingBottom: '100px' }}>
@@ -87,17 +166,17 @@ const Profile = () => {
           color: 'white',
           fontWeight: 'bold'
         }}>
-          {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+          {(formData.firstName?.[0] || '?')}{(formData.lastName?.[0] || '?')}
         </div>
         <div className="profile-info" style={{ flex: 1 }}>
           <h2 style={{ fontSize: '20px', marginBottom: '4px', color: 'var(--text-dark)' }}>
-            {user?.firstName} {user?.lastName}
+            {formData.firstName || 'Not set'} {formData.lastName || ''}
           </h2>
           <p style={{ color: 'var(--text-light)', fontSize: '14px', marginBottom: '8px' }}>
-            {user?.email}
+            {formData.email}
           </p>
           <button
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={() => isEditing ? handleSave() : setIsEditing(true)}
             style={{
               background: isEditing ? '#28a745' : 'var(--primary-red)',
               color: 'white',
@@ -153,7 +232,7 @@ const Profile = () => {
                 <input
                   type={field.key === 'email' ? 'email' : 'text'}
                   name={field.key}
-                  value={formData[field.key]}
+                  value={formData[field.key] || ''}
                   onChange={handleChange}
                   className="input-field"
                   style={{
@@ -162,10 +241,9 @@ const Profile = () => {
                     border: '1px solid var(--border-color)',
                     borderRadius: '6px',
                     fontSize: '14px',
-                    marginBottom: '0',
-                    outline: 'none',
-                    transition: 'border-color 0.3s ease'
+                    outline: 'none'
                   }}
+                  disabled={field.key === 'email'}
                 />
               ) : (
                 <div style={{
@@ -181,39 +259,6 @@ const Profile = () => {
             </div>
           ))}
         </div>
-
-        {isEditing && (
-          <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-            <button
-              onClick={handleSave}
-              style={{
-                background: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                cursor: 'pointer'
-              }}
-            >
-              Save Changes
-            </button>
-            <button
-              onClick={() => setIsEditing(false)}
-              style={{
-                background: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                cursor: 'pointer'
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Emergency Contacts */}
@@ -257,7 +302,7 @@ const Profile = () => {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button 
+                <button
                   onClick={() => handleCallEmergencyContact(contact.phone)}
                   style={{
                     background: 'var(--primary-red)',
@@ -266,15 +311,12 @@ const Profile = () => {
                     borderRadius: '50%',
                     width: '36px',
                     height: '36px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    cursor: 'pointer'
                   }}
                 >
                   📞
                 </button>
-                <button 
+                <button
                   onClick={() => handleRemoveEmergencyContact(index)}
                   style={{
                     background: '#dc3545',
@@ -283,10 +325,7 @@ const Profile = () => {
                     borderRadius: '50%',
                     width: '36px',
                     height: '36px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    cursor: 'pointer'
                   }}
                 >
                   🗑️
@@ -296,7 +335,7 @@ const Profile = () => {
           ))}
         </div>
 
-        <button 
+        <button
           onClick={handleAddEmergencyContact}
           style={{
             width: '100%',
@@ -314,59 +353,7 @@ const Profile = () => {
         </button>
       </div>
 
-      {/* Settings & Actions */}
-      <div style={{
-        background: 'white',
-        borderRadius: '16px',
-        padding: '20px',
-        marginBottom: '24px',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-      }}>
-        <h3 style={{
-          fontSize: '18px',
-          fontWeight: '600',
-          marginBottom: '16px',
-          color: 'var(--text-dark)'
-        }}>
-          Settings
-        </h3>
-
-        <div style={{ display: 'grid', gap: '8px' }}>
-          {[
-            { label: 'Change Language', icon: '🌐', action: () => console.log('Change language') },
-            { label: 'Privacy Settings', icon: '🔒', action: () => console.log('Privacy settings') },
-            { label: 'Notification Settings', icon: '🔔', action: () => console.log('Notification settings') },
-            { label: 'Help & Support', icon: '❓', action: () => console.log('Help & support') },
-            { label: 'About ALERTIFY', icon: 'ℹ️', action: () => console.log('About RESQ') }
-          ].map((setting, index) => (
-            <button
-              key={index}
-              onClick={setting.action}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                padding: '12px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                color: 'var(--text-dark)',
-                textAlign: 'left',
-                transition: 'background 0.3s ease'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--background-gray)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-            >
-              <span style={{ fontSize: '18px' }}>{setting.icon}</span>
-              {setting.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Logout Button */}
+      {/* Logout */}
       <button
         onClick={handleLogout}
         style={{
@@ -378,15 +365,10 @@ const Profile = () => {
           padding: '16px',
           fontSize: '16px',
           fontWeight: '600',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px'
+          cursor: 'pointer'
         }}
       >
-        <span style={{ fontSize: '18px' }}>🚪</span>
-        Logout
+        🚪 Logout
       </button>
     </div>
   );

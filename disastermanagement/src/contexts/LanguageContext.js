@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
 const LanguageContext = createContext();
 
@@ -10,12 +11,12 @@ export const useLanguage = () => {
   return context;
 };
 
-// Translation data
-const translations = {
+// ✅ LibreTranslate API Configuration
+const TRANSLATE_API = 'https://libretranslate.com/translate';
+
+// ✅ Base English translations (fallback)
+const baseTranslations = {
   en: {
-    // Language Selection
-    selectLanguage: 'Select Language',
-    
     // Authentication
     signIn: 'Sign In',
     signUp: 'Sign Up',
@@ -71,72 +72,128 @@ const translations = {
     maps: 'Maps',
     help: 'Help',
     settings: 'Settings',
-    sos: 'SOS',
-    
-    // News
-    floodWarning: 'Flash flood warning issued for the Kavitha district. Heavy rainfall is expected in the next 24 hours. Stay home for further directions.',
-    roadClosed: 'Landslide reported in the Garhmore district due toll highway. Road is closed until further notice. Seek alternative routes.',
-    trainServices: 'Train services disrupted in the Backhi district due to a landslide. Expect delays and plan accordingly.'
-  },
-  hi: {
-    // Language Selection
-    selectLanguage: 'भाषा चुनें',
-    
-    // Authentication
-    signIn: 'साइन इन',
-    signUp: 'साइन अप',
-    email: 'ईमेल',
-    password: 'पासवर्ड',
-    confirmPassword: 'पासवर्ड की पुष्टि करें',
-    firstName: 'पहला नाम',
-    lastName: 'अंतिम नाम',
-    mobileNumber: 'मोबाइल नंबर',
-    login: 'लॉगिन',
-    loginWithGoogle: 'गूगल के साथ लॉगिन',
-    forgotPassword: 'पासवर्ड भूल गए?',
-    submit: 'जमा करें',
-    
-    // Navigation
-    menu: 'मेन्यू',
-    services: 'सेवाएं',
-    emergency: 'आपातकाल',
-    profile: 'प्रोफाइल',
-    latestNews: 'ताजा खबर',
-    
-    // Emergency
-    emergencySOS: 'आपातकाल | SOS',
-    yourAlertNotified: 'आपकी चेतावनी की सूचना दी गई है',
-    ambulanceResponse: 'एम्बुलेंस और रेस्पॉन्स टीम रास्ते में है!',
-    hangInTight: 'धैर्य रखें! हम आपके लिए आ रहे हैं,',
-    just: 'बस',
-    mins: 'मिनट',
-    emergencyNumber: 'आपातकालीन नंबर'
+    sos: 'SOS'
   }
 };
 
 export const LanguageProvider = ({ children }) => {
   const [currentLanguage, setCurrentLanguage] = useState('en');
+  const [translations, setTranslations] = useState(baseTranslations);
+  const [loading, setLoading] = useState(false);
+  const [translationCache, setTranslationCache] = useState({});
 
+  // ✅ Load language from localStorage on mount
   useEffect(() => {
     const storedLanguage = localStorage.getItem('resq_language');
+    const storedCache = localStorage.getItem('resq_translation_cache');
+    
     if (storedLanguage) {
       setCurrentLanguage(storedLanguage);
     }
+    
+    if (storedCache) {
+      try {
+        setTranslationCache(JSON.parse(storedCache));
+      } catch (e) {
+        console.error('Error loading translation cache:', e);
+      }
+    }
   }, []);
 
-  const changeLanguage = (languageCode) => {
-    setCurrentLanguage(languageCode);
-    localStorage.setItem('resq_language', languageCode);
+  // ✅ Translate single text using LibreTranslate API
+  const translateText = async (text, targetLang) => {
+    // Return original if target is English
+    if (targetLang === 'en') return text;
+
+    // Check cache first
+    const cacheKey = `${text}_${targetLang}`;
+    if (translationCache[cacheKey]) {
+      return translationCache[cacheKey];
+    }
+
+    try {
+      const response = await axios.post(TRANSLATE_API, {
+        q: text,
+        source: 'en',
+        target: targetLang,
+        format: 'text'
+      });
+
+      const translated = response.data.translatedText;
+      
+      // Store in cache
+      const newCache = { ...translationCache, [cacheKey]: translated };
+      setTranslationCache(newCache);
+      localStorage.setItem('resq_translation_cache', JSON.stringify(newCache));
+      
+      return translated;
+    } catch (error) {
+      console.error('Translation error:', error);
+      return text; // Return original text on error
+    }
   };
 
+  // ✅ Translate all app texts to target language
+  const translateAllTexts = async (targetLang) => {
+    if (targetLang === 'en') {
+      setTranslations(baseTranslations);
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const englishTexts = baseTranslations.en;
+      const translatedTexts = {};
+
+      // Translate all texts
+      for (const [key, value] of Object.entries(englishTexts)) {
+        translatedTexts[key] = await translateText(value, targetLang);
+      }
+
+      setTranslations({
+        ...baseTranslations,
+        [targetLang]: translatedTexts
+      });
+    } catch (error) {
+      console.error('Error translating all texts:', error);
+      // Fallback to English
+      setTranslations(baseTranslations);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Change language and auto-translate
+  const changeLanguage = async (languageCode) => {
+    setCurrentLanguage(languageCode);
+    localStorage.setItem('resq_language', languageCode);
+    
+    // If translations for this language don't exist, translate them
+    if (!translations[languageCode]) {
+      await translateAllTexts(languageCode);
+    }
+  };
+
+  // ✅ Get translation for a key
   const t = (key) => {
-    return translations[currentLanguage]?.[key] || translations.en[key] || key;
+    return translations[currentLanguage]?.[key] || 
+           translations.en?.[key] || 
+           key;
+  };
+
+  // ✅ Translate dynamic text (for user-generated content)
+  const translateDynamic = async (text) => {
+    if (currentLanguage === 'en') return text;
+    return await translateText(text, currentLanguage);
   };
 
   const value = {
     currentLanguage,
     changeLanguage,
     t,
+    translateDynamic,
+    loading,
     availableLanguages: [
       { code: 'en', name: 'English', nativeName: 'English' },
       { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
@@ -147,7 +204,9 @@ export const LanguageProvider = ({ children }) => {
       { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી' },
       { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
       { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ' },
-      { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ' }
+      { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ' },
+      { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ' },
+      { code: 'ur', name: 'Urdu', nativeName: 'اردو' }
     ]
   };
 
